@@ -244,13 +244,15 @@ hr {
   letter-spacing: 0.15em;
   margin: 0;
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: 600;
   border-radius: var(--radius-full);
   transition: background var(--transition), color var(--transition),
               box-shadow var(--transition), transform var(--transition);
   display: inline-block;
   position: relative;
   overflow: hidden;
+  /* Ensure text always sits above the ::before fill layer */
+  isolation: isolate;
 }
 
 .btn-custom::before {
@@ -261,21 +263,18 @@ hr {
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.35s var(--ease-out);
-  z-index: 0;
+  z-index: -1;
   border-radius: var(--radius-full);
-}
-
-.btn-custom span, .btn-custom {
-  position: relative;
-  z-index: 1;
 }
 
 .btn-custom:hover,
 .btn-custom:focus {
-  color: var(--navy-dark);
+  /* navy-dark = #0a1628 — high contrast on brass gold (#c9a84c) */
+  color: #0a1628;
   border-color: var(--brass-gold);
   box-shadow: var(--shadow-gold);
   transform: translateY(-1px);
+  text-decoration: none;
 }
 
 .btn-custom:hover::before {
@@ -285,6 +284,7 @@ hr {
 .btn-custom:active {
   transform: translateY(0);
   box-shadow: none;
+  color: #0a1628;
 }
 
 .btn:active, .btn.active {
@@ -778,13 +778,34 @@ header .intro-text {
 }
 
 /* ── Gallery / Portfolio Section ────────────────────────────── */
+/* ── Portfolio / Gallery ────────────────────────────────────── */
 #portfolio {
   padding: clamp(60px, 8vw, 120px) 0;
   background: var(--color-bg);
 }
 
+/* Override Bootstrap's row negative margins so the grid
+   doesn't collapse or overflow on mobile */
+#portfolio .portfolio-items {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each Bootstrap col becomes a plain block inside our CSS grid */
+#portfolio .portfolio-items .col-sm-6,
+#portfolio .portfolio-items .col-md-4,
+#portfolio .portfolio-items .col-lg-4 {
+  width: 100% !important;   /* override Bootstrap's percentage widths */
+  padding: 0;               /* remove Bootstrap's gutter padding */
+  float: none;              /* override Bootstrap's float */
+}
+
 .portfolio-item {
-  margin: 1px -15px 0 -14px;
+  margin: 0;
   padding: 0;
 }
 
@@ -793,31 +814,37 @@ header .intro-text {
   position: relative;
   margin: 0;
   border-radius: var(--radius-md);
+  /* Square aspect ratio so all cards look uniform */
+  aspect-ratio: 1 / 1;
 }
 
 .portfolio-item .hover-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
   transition: transform 0.6s var(--ease-out);
   border-radius: var(--radius-md);
 }
 
 .portfolio-item .hover-bg:hover img {
-  transform: scale(1.06);
+  transform: scale(1.07);
 }
 
 .hover-bg .hover-text {
   position: absolute;
+  inset: 0;
   text-align: center;
-  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   color: #fff;
   background: linear-gradient(
     to top,
-    rgba(8, 15, 30, 0.85) 0%,
-    rgba(16, 59, 117, 0.6) 60%,
+    rgba(8, 15, 30, 0.88) 0%,
+    rgba(16, 59, 117, 0.45) 55%,
     transparent 100%
   );
-  padding: 30% 0 0;
-  height: 100%;
-  width: 100%;
   opacity: 0;
   transition: opacity 0.4s var(--ease-out);
   border-radius: var(--radius-md);
@@ -826,26 +853,40 @@ header .intro-text {
 .hover-bg .hover-text > h4 {
   opacity: 0;
   color: #fff;
-  -webkit-transform: translateY(12px);
-  transform: translateY(12px);
+  transform: translateY(10px);
   transition: all 0.35s var(--ease-out);
-  font-size: 1rem;
-  letter-spacing: 0.08em;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
   font-weight: 500;
   text-transform: uppercase;
   font-family: var(--font-body);
-  padding: 0 16px 24px;
+  padding: 0 12px 18px;
+  margin: 0;
+  width: 100%;
 }
 
 .hover-bg:hover .hover-text > h4 {
   opacity: 1;
-  -webkit-backface-visibility: hidden;
-  -webkit-transform: translateY(0);
   transform: translateY(0);
 }
 
 .hover-bg:hover .hover-text {
   opacity: 1;
+}
+
+/* Responsive: 2 columns on tablet, 2 on mobile */
+@media screen and (max-width: 900px) {
+  #portfolio .portfolio-items {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  #portfolio .portfolio-items {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
 }
 
 /* Modal */
@@ -1101,9 +1142,10 @@ header .intro-text {
   color: var(--brass-gold);
 }
 
-#contact .btn-custom:hover {
-  color: var(--navy-dark);
-  background: var(--brass-gold);
+#contact .btn-custom:hover,
+#contact .btn-custom:focus {
+  color: #0a1628;
+  background: transparent; /* fill comes from ::before */
 }
 
 label {
@@ -1231,22 +1273,101 @@ label {
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
+/* ==============================================
+   MOBILE — 768px and below
+   ============================================== */
 @media screen and (max-width: 768px) {
+
+  /* — Hero — */
   header .intro-text {
-    padding-top: 140px;
-    padding-bottom: 120px;
+    padding-top: 120px;
+    padding-bottom: 100px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .intro h1 {
+    font-size: clamp(2rem, 8vw, 3rem);
+    letter-spacing: 0.04em;
+  }
+
+  .intro h1 span {
+    font-size: 0.6em;
+    letter-spacing: 0.12em;
+  }
+
+  .intro p {
+    font-size: 1rem;
+    margin-bottom: 32px;
+  }
+
+  .intro-eyebrow {
+    font-size: 0.65rem;
+    padding: 5px 14px;
+    margin-bottom: 20px;
+  }
+
+  .btn-custom {
+    padding: 12px 28px;
+    font-size: 0.75rem;
+  }
+
+  /* — Navbar — */
+  #menu {
+    padding: 10px 0;
+  }
+
+  #menu a.navbar-brand {
+    font-size: 1.3rem;
+  }
+
+  /* Mobile nav dropdown: dark background to match navbar */
+  .navbar-collapse {
+    background: rgba(8, 15, 30, 0.98);
+    border-top: 1px solid rgba(201, 168, 76, 0.15);
+    padding: 8px 0 16px;
+  }
+
+  #menu.navbar-default .navbar-nav > li > a {
+    margin: 0;
+    padding: 12px 20px;
+    border-radius: 0;
+    color: rgba(255,255,255,0.75);
+  }
+
+  #menu.navbar-default .navbar-nav > li > a:hover {
+    color: var(--brass-gold);
+    background: rgba(201, 168, 76, 0.07);
+  }
+
+  /* Hide the underline pseudo-element on mobile — doesn't work with block layout */
+  #menu.navbar-default .navbar-nav > li > a:after {
+    display: none;
+  }
+
+  /* — About — */
+  #about .col-xs-12 {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  #about img {
+    width: 100%;
+    margin-bottom: 28px;
   }
 
   .about-text {
-    padding: 30px 0 0;
+    padding: 0 15px;
+    text-align: center;
   }
 
   .about-text h2::after {
     left: 50%;
-    margin-left: -24px;
+    transform: translateX(-50%);
+    margin-left: 0;
   }
 
-  .about-text {
+  .about-text h3 {
     text-align: center;
   }
 
@@ -1254,25 +1375,131 @@ label {
     text-align: left;
   }
 
+  /* — Services — */
+  #services {
+    padding: 60px 0;
+  }
+
   .service-card {
     margin-bottom: 16px;
+    padding: 28px 24px;
+  }
+
+  /* — Portfolio — */
+  #portfolio {
+    padding: 60px 0;
+  }
+
+  /* — Testimonials — */
+  #testimonials {
+    padding: 60px 0;
+  }
+
+  .testimonial {
+    margin-bottom: 16px;
+  }
+
+  /* — Team — */
+  #team {
+    padding: 60px 0;
+  }
+
+  #team .team {
+    margin-bottom: 32px;
+  }
+
+  #team .team-img {
+    width: 160px;
+    height: 160px;
+  }
+
+  /* — Contact — */
+  #contact {
+    padding: 60px 0 48px;
+  }
+
+  #contact .col-md-3 {
+    margin-top: 40px;
+  }
+
+  #contact h3 {
+    margin-top: 32px;
+  }
+
+  /* — Section titles — */
+  .section-title {
+    margin-bottom: 40px;
+  }
+
+  .section-title h2 {
+    font-size: clamp(1.4rem, 5vw, 2rem);
+  }
+
+  .section-title p {
+    font-size: 0.95rem;
+    padding: 0 8px;
   }
 }
 
-@media screen and (max-width: 400px) {
-  #features {
-    padding: 20px;
-    width: 111%;
-  }
+/* ==============================================
+   MOBILE — 480px and below (small phones)
+   ============================================== */
+@media screen and (max-width: 480px) {
+
+  /* Fix the broken width:111% overflow hack from original template */
+  #features,
   #about,
   #services,
   #testimonials,
   #team,
   #contact,
-  #footer {
-    width: 111%;
-  }
+  #footer,
   #portfolio {
-    width: 110%;
+    width: 100% !important;
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  header .intro-text {
+    padding-top: 100px;
+    padding-bottom: 80px;
+  }
+
+  .intro h1 {
+    font-size: clamp(1.7rem, 9vw, 2.4rem);
+  }
+
+  /* Stack contact columns properly */
+  #contact .col-md-8,
+  #contact .col-md-3 {
+    width: 100%;
+    padding: 0 16px;
+  }
+
+  /* Team: 2 per row on small phones */
+  #team .col-md-3 {
+    width: 50%;
+  }
+
+  .service-card {
+    padding: 24px 20px;
+  }
+
+  .testimonial {
+    padding: 24px 20px;
+  }
+
+  /* Modal full-screen on small phones */
+  .image-modal .modal-image {
+    max-width: 95vw;
+    max-height: 80vh;
   }
 }
